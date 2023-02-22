@@ -16,4 +16,7 @@ def combine_description_strings( df: pd.DataFrame):
     df["Description"] = df["Description"].map(lambda x: x.strip("'''")) 
     return df
    
-
+def set__default_feature_values(df:pd.DataFrame):
+    df.loc[:,["bedrooms","bathrooms","beds","guests"]] =  df.loc[:,["bedrooms","bathrooms","beds","guests"]].replace({np.nan:int(1)})
+    return df
+    
