@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-import ast
-tab_df = pd.read_csv("listing.csv")
+
 
 def remove_rows_with_missing_ratings(df: pd.DataFrame):
     df.dropna(subset=["Location_rating","Cleanliness_rating","Accuracy_rating","Value_rating","Check-in_rating","Communication_rating"], inplace=True)
@@ -19,4 +18,14 @@ def combine_description_strings( df: pd.DataFrame):
 def set__default_feature_values(df:pd.DataFrame):
     df.loc[:,["bedrooms","bathrooms","beds","guests"]] =  df.loc[:,["bedrooms","bathrooms","beds","guests"]].replace({np.nan:int(1)})
     return df
+    
+def clean_tabular_data(data):
+    tab_df = pd.read_csv(data)
+    remove_rows_with_missing_ratings(tab_df)
+    combine_description_strings(tab_df)
+    set__default_feature_values(tab_df)
+    return tab_df
+
+if __name__ == "__main__":
+    clean_tabular_data("listing.csv").to_csv("clean_tabular_data.csv")
     
