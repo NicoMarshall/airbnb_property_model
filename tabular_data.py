@@ -26,6 +26,19 @@ def clean_tabular_data(data):
     set__default_feature_values(tab_df)
     return tab_df
 
+def load_airbnb(data: pd.DataFrame, label: str):
+    tab_df = pd.read_csv(data)
+    labels = tab_df[label]
+    tab_df = tab_df.drop(label, axis = 1)
+    text_cols = tab_df.select_dtypes(include = object).drop(["bedrooms","guests"] ,axis=1)
+    tab_df = tab_df.drop(text_cols,axis=1)
+    features = tab_df
+    return features, labels
+    
+        
+    
+
 if __name__ == "__main__":
     clean_tabular_data("listing.csv").to_csv("clean_tabular_data.csv")
+    load_airbnb("clean_tabular_data.csv", "Title")
     
