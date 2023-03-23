@@ -26,7 +26,7 @@ def clean_tabular_data(data):
     set__default_feature_values(tab_df)
     return tab_df
 
-def load_airbnb(data: pd.DataFrame, label: str):
+def load_airbnb(data, label: str):
     tab_df = pd.read_csv(data)
     labels = tab_df[label]
     tab_df = tab_df.drop(label, axis = 1)
