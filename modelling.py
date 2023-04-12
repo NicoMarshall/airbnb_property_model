@@ -4,7 +4,7 @@ from sklearn import datasets, model_selection, linear_model,metrics
 from tabular_data import load_airbnb
 
 
-#model = linear_model.SGDRegressor() 
+#model = linear_model.SGDRegressor() #
 model = linear_model.LinearRegression()
 
 if __name__ == "__main__":
