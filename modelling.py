@@ -4,6 +4,8 @@ from sklearn import datasets, model_selection, linear_model,metrics
 from sklearn.model_selection import GridSearchCV
 from tabular_data import load_airbnb
 import itertools
+import os
+import json
 
 
 def makeGrid(my_dict):  
@@ -41,8 +43,20 @@ def tune_regression_model_hyperparameters(features,labels, hyperparameter_dict):
     grid_search = GridSearchCV(model,hyperparameter_dict,scoring = "neg_root_mean_squared_error")
     grid_search.fit(features,labels)
     best_params = grid_search.get_params()
+    best_params["estimator"] = str(best_params["estimator"])
     best_loss = np.abs(grid_search.best_score_)
-    return best_params,best_loss
+    return grid_search,best_params,best_loss
+
+def save_model(folder,model,best_params,best_loss):
+    os.chdir(folder)
+    joblib.dump(model,"model.joblib")
+    with open("hyperparameters.json", "w") as outfile:
+        json.dump(best_params, outfile)
+    with open("metrics.json", "w") as outfile:
+        json.dump(best_loss, outfile)
+    os.chdir(f"C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model")
+    
+    
         
 if __name__ == "__main__":
     features, labels = load_airbnb("clean_tabular_data.csv","Price_Night")
@@ -50,8 +64,11 @@ if __name__ == "__main__":
     x_validation, x_test, y_validation,y_test = model_selection.train_test_split(x_test,y_test,test_size = 0.5)
     hyperparameter_dict = {"loss":["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"],"penalty":["l2", "l1", "elasticnet",None],"alpha":[0.0001,0.0005,0.001,0.1,0.001],"shuffle":[True,False],"learning_rate":["constant","optimal","invscaling"]}
     #optimals = custom_tune_regression_hyperparameters(linear_model.SGDRegressor,x_train ,x_test ,y_train ,y_test,x_validation,y_validation,hyperparameter_dict)
-    skl_optimisation = tune_regression_model_hyperparameters(features,labels,hyperparameter_dict)
-    print(skl_optimisation)
+    skl_opt = tune_regression_model_hyperparameters(features,labels,hyperparameter_dict)
+    print(skl_opt)
+    file_dest = f"C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model\\models\\regression\\lin_regression"
+    save_model(file_dest,skl_opt[0],skl_opt[1],skl_opt[2])
+    
     #print(optimals)
     
     
