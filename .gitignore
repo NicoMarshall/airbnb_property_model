@@ -1,2 +1,5 @@
 processed_images/*
 images/*
+linear_regression.py
+multiclass_classification.py
+
