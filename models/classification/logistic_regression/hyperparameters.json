@@ -1,1 +1,1 @@
-{"penalty": null, "dual": false, "C": 1, "solver": "newton-cg", "max_iter": 500}
+{"penalty": null, "dual": false, "C": 0.5, "solver": "newton-cg", "max_iter": 500}

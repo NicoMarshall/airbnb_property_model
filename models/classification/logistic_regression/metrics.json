@@ -1,1 +1,1 @@
-0.47580645161290325
+{"accuracy_score": 0.45161290322580644, "recall_scores": {"Beachfront": 0.5, "Amazing pools": 0.45, "Offbeat": 0.2, "Chalets": 0.5483870967741935, "Treehouses": 0.5333333333333333}, "precision_scores": {"Beachfront": 0.6, "Amazing pools": 0.47368421052631576, "Offbeat": 0.45454545454545453, "Chalets": 0.40476190476190477, "Treehouses": 0.43243243243243246}, "f_1_score": 0.4456272299453653}
