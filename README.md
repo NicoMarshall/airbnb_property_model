@@ -43,9 +43,9 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
     hyperparameter_optimals = {"parameters": best_params,"rmse": best_rmse,"r_2": r_2_score,"rmse_train":rmse_train,"r_2_train":r_2_train,}
     
     return hyperparameter_optimals #returns dictionary of best hyperparameters and associated metrics
-    ```
+```
     Once this was working well, I also made an alternative method to implement the same grid search using the in built GridSearchCV class of Sklearn;
-    ```
+```
     def tune_regression_model_hyperparameters(features,labels, hyperparameter_dict):
     model = linear_model.SGDRegressor(max_iter=1000)
     grid_search = GridSearchCV(model,hyperparameter_dict,scoring = "neg_root_mean_squared_error")
@@ -66,5 +66,5 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
     with open("metrics.json", "w") as outfile:
         json.dump(best_loss, outfile)
     os.chdir(f"C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model")
-    ```
+```
     
