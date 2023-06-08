@@ -1,0 +1,1 @@
+{"penalty": null, "dual": false, "C": 0.5, "solver": "newton-cg", "max_iter": 500}
