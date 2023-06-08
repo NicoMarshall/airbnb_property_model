@@ -44,7 +44,7 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
     
     return hyperparameter_optimals #returns dictionary of best hyperparameters and associated metrics
 ```
-    Once this was working well, I also made an alternative method to implement the same grid search using the in built GridSearchCV class of Sklearn;
+Once this was working well, I also made an alternative method to implement the same grid search using the in built GridSearchCV class of Sklearn;
 ```
     def tune_regression_model_hyperparameters(features,labels, hyperparameter_dict):
     model = linear_model.SGDRegressor(max_iter=1000)
@@ -55,9 +55,9 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
     best_loss = np.abs(grid_search.best_score_)
     return grid_search,best_params,best_loss
     
-    ```
-    The model and associated data was saved using joblib;
-    ```
+```
+The model and associated data was saved using joblib;
+```
     def save_model(folder,model,best_params,best_loss):
     os.chdir(folder)
     joblib.dump(model,"model.joblib")
