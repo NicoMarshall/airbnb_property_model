@@ -44,7 +44,6 @@ if __name__ == "__main__":
     train_data = AirbnbNightlyPriceRegressionDataset(x_train, y_train)
     test_data = AirbnbNightlyPriceRegressionDataset(x_test, y_test)
     validation_data = AirbnbNightlyPriceRegressionDataset(x_validation, y_validation)
-    #print(x_train.shape, y_train.shape, x_validation.shape, y_validation.shape)
     train_dataloader = torch.utils.data.DataLoader(train_data, batch_size = 32, shuffle = True)
     train (nn_model, train_dataloader)
               
