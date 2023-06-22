@@ -7,6 +7,7 @@ from torcheval.metrics.functional import r2_score
 import pandas as pd
 import numpy as np
 from tabular_data import load_airbnb
+from modelling import makeGrid
 from sklearn.model_selection import train_test_split
 from torch.utils.tensorboard import SummaryWriter
 import yaml
@@ -14,6 +15,8 @@ import os
 import json
 import datetime
 import time
+import itertools
+import random
 
 class nn_model(nn.Module):
     def __init__(self):
@@ -75,18 +78,21 @@ class nn_config(nn.Module):
     def __init__(self, config):
         super().__init__()
         layers = []
-        input_size = config["network"]["input_size"]
-        for layer_config in config["network"]["layers"]:
-            width = layer_config["units"]
+        input_size = config["input_size"]
+        for layer_config in config["layers"]:
             type = layer_config["type"]
-            activation = layer_config["activation"]
-            if type == "dense":
-                layers.append(nn.Linear(input_size, width))
-            elif activation == "relu":
-                layers.append(nn.ReLU())
-            elif activation == "softmax":
-                layers.append(nn.softmax)(dim =1)
-            input_size = width
+            if type == "batchnorm":
+                layers.append(nn.BatchNorm1d(input_size))
+            else:
+                width = layer_config["units"]
+                activation = layer_config["activation"]
+                if type == "dense":
+                    layers.append(nn.Linear(input_size, width))
+                if activation == "relu":
+                    layers.append(nn.ReLU())
+                elif activation == "softmax":
+                    layers.append(nn.softmax)(dim =1)
+                input_size = width
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -98,11 +104,32 @@ def get_nn_config(config_file: yaml):
         config = yaml.safe_load(file)
     return config
 
+def generate_nn_config(n_hidden:int):
+    config_layers = makeGrid({"type":["relu","batchnorm"],"units":[1,10,20],"activation":["relu","Softmax"]})
+    config_lr_epochs = makeGrid({"learning_rate":[0.1, 0.01, 0.001],"epochs":[100]})
+    layers= random.choices(config_layers, k=n_hidden)
+    layers.append({"type":"dense","units":1,"activation":"relu"})
+    hyperparams = random.choice(config_lr_epochs)
+    hyperparams.update([("layers",layers),("input_size",11),("n_hidden",n_hidden),("optim_name","SGD"),("loss","mse_loss")]) 
+    return hyperparams
+    
+def find_best_nn(num_combinations:int, n_hidden):
+    for i in range(num_combinations):
+        config = generate_nn_config(n_hidden)
+        model, train_time = config_train(nn_config, config, train_dataloader, validation_dataloader)        
+        metrics = eval_model(model, train_dataloader, validation_dataloader, test_dataloader, train_size)
+        metrics["train time"] = train_time
+        dest_folder="C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model\\models\\neural_networks\\regression"
+        try:
+            save_model(dest_folder,model,config,metrics)
+        except FileExistsError:
+            save_model(dest_folder,model,config,metrics,duplicate=True)
+
 def config_train(model_class, config, train_dataloader, val_dataloader):
     start_time = time.perf_counter()
     model = model_class(config)
-    optimiser = getattr(torch.optim, config["optimiser"]["name"])
-    learning_rate = config["optimiser"]["learning_rate"]
+    optimiser = getattr(torch.optim, config["optim_name"])
+    learning_rate = config["learning_rate"]
     optimiser = optimiser(model.parameters(), lr = learning_rate)
     epochs = config["epochs"]
     loss_function = getattr(F, config["loss"])
@@ -158,10 +185,12 @@ def eval_model(model,train_dataloader,validation_dataloader,test_dataloader,trai
         metric_dict = dict(zip(metric_labels,metrics))
         return metric_dict
 
-def save_model(folder,model,config,metrics):
+def save_model(folder,model,config,metrics, duplicate = False):
     working_dir = os.getcwd()
     if isinstance(model, nn.Module):
-        date_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        date_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+        if duplicate:
+            date_time = datetime.datetime.now().strftime("%H%M%S")
         os.chdir(folder)
         os.mkdir(date_time)
         os.chdir(date_time)
@@ -188,9 +217,12 @@ if __name__ == "__main__":
     validation_dataloader = torch.utils.data.DataLoader(validation_data, batch_size = len(validation_data), shuffle = True)
     test_dataloader = torch.utils.data.DataLoader(test_data, batch_size = len(test_data), shuffle = True)
     #train (nn_model, train_dataloader, validation_dataloader, num_epochs= 31, learn_rate=0.1)
+    """
     config = get_nn_config("nn_config.yaml")
     model, train_time = config_train(nn_config, config, train_dataloader, validation_dataloader)        
     metrics = eval_model(model, train_dataloader, validation_dataloader, test_dataloader, train_size)
     metrics["train time"] = train_time
     dest_folder="C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model\\models\\neural_networks\\regression"
     save_model(dest_folder,model,config,metrics)
+    """
+    find_best_nn(num_combinations=5, n_hidden = 20)

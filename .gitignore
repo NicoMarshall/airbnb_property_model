@@ -2,3 +2,4 @@ processed_images/*
 images/*
 exercises/*
 runs/*
+models/neural_networks*

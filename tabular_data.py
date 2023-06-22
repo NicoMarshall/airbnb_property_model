@@ -33,16 +33,13 @@ def load_airbnb(data, label: str):
     tab_df = tab_df.drop(label, axis = 1)
     text_cols = tab_df.select_dtypes(include = object)
     tab_df = tab_df.drop(text_cols,axis=1).drop('Unnamed: 0',axis=1).drop('Unnamed: 19',axis=1)
-    #print("bedrooms:",tab_df["bedrooms"].value_counts())
-    #print("Location_rating:", tab_df["Location_rating"].value_counts())
-    #tab_df['Unnamed: 0']
-    features = tab_df
-    return features, labels
+    
+    return tab_df, labels
     
         
     
 
 if __name__ == "__main__":
-    clean_tabular_data("listing.csv").to_csv("clean_tabular_data.csv")
-    load_airbnb("clean_tabular_data.csv", "Price_Night")
-    
+    #clean_tabular_data("listing.csv").to_csv("clean_tabular_data.csv")
+    f, l = load_airbnb("clean_tabular_data.csv", "Price_Night")
+    print(f.size)
