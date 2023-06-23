@@ -109,3 +109,10 @@ hyperparam_dict_logistic = {"penalty":["l1", "l2", "elasticnet", None], "dual": 
 hyperparam_dict_random_forest = {"n_estimators":[50,100,150,200],"criterion":["gini", "entropy", "log_loss"],"max_depth":[None,10,20],"max_features":["sqrt", "log2", None]}
 hyperparam_dict_grad_boost = {"loss":["log_loss","deviance","exponential"],"learning_rate":[0.001,0.01,0.1],"n_estimators":[100,150,200]}
 ```
+## Milestone 4: Deep Learning
+![training_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/763c3606-9e21-440f-894d-53d105c49148)
+![validation_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/1e7302d5-13ab-451e-86bf-ea2318078f9a)
+
+
+
+
