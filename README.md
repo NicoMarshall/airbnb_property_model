@@ -130,6 +130,9 @@ Overall the best model found, with an accuracy and f_1 score of 45% and 0.41 res
   * criterion = log_loss
   * max_features = log2
 
+Though it should be noted that the best peforming logistic regression and gradient boosted models performed only slightly worse. It appears that 50% accuracy
+on unseen data is an upper ceiling that can't be breached by any standard classification model, at least using these 11 variables as our features. 
+
 The confusion matrix for this model on the test set is shown here: 
 ![Figure_1](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/2cd6af91-a8dd-4493-a40f-51bcce47e00e)
 
@@ -299,6 +302,6 @@ from Milestone 1. We can observe that the smoothed loss on the training and vali
 ![validation_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/1e7302d5-13ab-451e-86bf-ea2318078f9a)
 
 ## Conclusions
-The overall conclusion that we can make from the regression models, and their relatively low predicitive power, is that the features used in these 
+The overall conclusion looking across all the best models, and their relatively low predicitive power, is that the features used in these 
 models are poorly correlated with price. A suggested explanation is that when most customers rate their stay, they do so without much thought and (so long as
 they were at least relatively satisfied) assign ratings of 3 or 4 stars by default. Furthermore, features such as bed and guest numbers might not be by themselves of much predictive use since the "density" and"quality" of these variables aren't captured. For example, a large mansion that fits two is likely to be more expensive than a cramped bunkhouse that fits 5, but our model might see the higher number of guests and predict a higher price. Thus for any future atempts to study this further, it might be worth changing the label to price per night per guest, and gathering the size of the property (eg in square feet) as another feature. 
