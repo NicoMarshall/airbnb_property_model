@@ -110,9 +110,164 @@ hyperparam_dict_random_forest = {"n_estimators":[50,100,150,200],"criterion":["g
 hyperparam_dict_grad_boost = {"loss":["log_loss","deviance","exponential"],"learning_rate":[0.001,0.01,0.1],"n_estimators":[100,150,200]}
 ```
 ## Milestone 4: Deep Learning
+Here we use the Pytorch deep learning library to train multiple neural networks that predict the nightly price of a listing, as with the regression models in Milestone 1. The full Python script can be found in pytorch_model.py.
+
+The first step is to load the data from a pandas dataframe into batches of Pytorch tensors; the required format. For this a data class is created that inherits from torch.utils.data.Dataset. This will later be used to create separate training, validation and test sets.
+```
+class AirbnbNightlyPriceRegressionDataset(torch.utils.data.Dataset):
+    def __init__(self, x, y):
+        # init parent class
+        super().__init__()
+        # create features, labels tensor tuple
+        self.features, self.labels = torch.from_numpy(np.array(x)).float(), torch.from_numpy(np.array(y)).float()
+        
+    def __getitem__(self, index):
+        # return single datapoint
+        return self.features[index], self.labels[index]
+    
+    def __len__(self):
+        # size of dataset
+        return len(self.labels)
+
+# init train dataset
+train_data = AirbnbNightlyPriceRegressionDataset(x_train, y_train)
+ 
+```
+The in-built torch Dataloader class is used to batch the data, ready to be ingested by a deep learning model:
+```
+ train_dataloader = torch.utils.data.DataLoader(train_data, batch_size = 32, shuffle = True)
+```
+We are now ready to begin experimenting with training different models. For the first attempt, we configure the hyperparameters 
+of a neural network in a YAML file (nn_config.yaml). This describes a model with three hidden linear layers and relu activation functions;
+```
+network:
+  name: nn_model
+  # number of features for each datapoint
+  input_size: 11 
+  layers:
+    - type: dense
+      units: 20
+      activation: relu
+    - type: dense
+      units: 10
+      activation: relu
+    - type: dense
+      # final output needs to be a single scalar
+      units: 1
+      activation: relu
+```
+The optimiser type for backpropagation (stochastic gradient descent) and loss function (rmse) are also specified in this file.
+
+We now need to create a model class that takes this  dictionary configuration as input and initialises a torch model. As is standard,
+it inherits from the base nn.Module class. We use two types of layers; linear and batchnorm. 
+```
+class nn_config(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        layers = []
+        input_size = config["input_size"]
+        # loop through all layers and store in list
+        for layer_config in config["layers"]:
+            type = layer_config["type"]
+            if type == "batchnorm":
+                layers.append(nn.BatchNorm1d(input_size))
+            else:
+                # specify number of nodes in layer 
+                width = layer_config["units"]
+                activation = layer_config["activation"]
+                if type == "dense":
+                    layers.append(nn.Linear(input_size, width))
+                if activation == "relu":
+                    layers.append(nn.ReLU())
+                elif activation == "softmax":
+                    layers.append(nn.softmax)(dim =1)
+                input_size = width
+        # concatenate layers, activations into a callable function
+        self.layers = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.layers(x)
+```
+All that's needed now is a method that will loop through the entire training dataset for the desired
+number of epochs, and update the model parameters for each batch in the dataloader. The SummaryWriter tool from Tensorboard is useful
+for visualising how model performance  varies with training time; every epoch on training set and every third epoch on validation we record the loss and store for later use.
+```
+def config_train(model_class, config, train_dataloader, val_dataloader):
+    # record training time as a useful metric
+    start_time = time.perf_counter()
+    # init model
+    model = model_class(config)
+    optimiser = getattr(torch.optim, config["optim_name"])
+    learning_rate = config["learning_rate"]
+    optimiser = optimiser(model.parameters(), lr = learning_rate)
+    epochs = config["epochs"]
+    loss_function = getattr(F, config["loss"])
+    writer = SummaryWriter()
+    # loop through epochs
+    for i in range(epochs):
+        # loop through training set
+        for features, labels in train_dataloader:
+            # put model in training mode
+            model.train()
+            # call model on features, then re-size the tensor to the same dimensions as labels
+            pred = model(features).view([len(labels)])
+            # calculate rmse loss
+            train_loss = torch.sqrt(loss_function(pred, labels))
+            # backpropagation and gradient updates 
+            optimiser.zero_grad()
+            train_loss.backward()
+            optimiser.step()
+            writer.add_scalar("Training Loss", train_loss, i)
+
+        # store validation loss every third epoch
+        if i%3 == 0:
+            # put model in evaluation mode   
+            model.eval() 
+            with torch.no_grad():
+                
+                val_loss = 0
+                for features, labels in val_dataloader:
+                        pred = model(features).view([len(labels)])
+                        val_loss = torch.sqrt(loss_function(pred, labels))
+                writer.add_scalar("Validation Loss", val_loss, i)
+        else:
+            pass
+        
+    train_time = time.perf_counter() - start_time         
+    return model, train_time
+```
+Trying this a few times and tweaking the configurations lead to a best model with a rmse on the validation set of around £150;
+much higher still than the best linear regression models. To try and improve on this we can modify the approach from previous 
+milestones and implement a grid search to try find the best model hyperparameters. In other words, we train multiple models each time varying
+the number of hidden layers, layer types, layer widths, activation functions, epochs and learning rate. The details for the implementation of this can be
+found inside the following methods: 
+  * generate_nn_config
+  * find_best_nn
+  * eval_model
+  * save_model
+   
+The best performing model was selected based on the test set, and had the following hyperparameters:
+  * learning_rate: 0.05 
+  * training epochs: 50
+  * number of layers : 11 (2 linear, 9 batchnorm)
+
+The following schematic provides a helpful overview of this model; 
+![nn](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/086ca6ee-5be4-465e-ae1f-a8f9ecdd6a13)
+
+(tool source: https://alexlenail.me/NN-SVG/index.html)
+ 
+Metrics:
+  * training loss / R2 score: 101.59 / 0.40
+  * validation loss / R2 score: 91.84 / 0.19
+  * test loss / R2 score: 97.55 / 0.43
+
+As we see, the grid search has yielded a better model - but still only one that is very similar in performance to the best linear regression model
+from Milestone 1. We can observe that the smoothed loss on the training and validation sets plateaus at around £100; still a poor performance: 
+
 ![training_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/763c3606-9e21-440f-894d-53d105c49148)
 ![validation_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/1e7302d5-13ab-451e-86bf-ea2318078f9a)
 
-
-
-
+## Conclusions
+The overall conclusion that we can make from all these models, and their relatively low predicitive power, is that the features used in these 
+models are poorly correlated with price. A suggested explanation is that when most customers rate their stay, they do so without much thought and (so long as
+they were at least relatively satisfied) assign ratings of 3 or 4 stars by default. Furthermore, features such as bed and guest numbers might not be by themselves of much predictive use since the "density" and"quality" of these variables aren't captured. For example, a large mansion that fits two is likely to be more expensive than a cramped bunkhouse that fits 5, but our model might see the higher number of guests and predict a higher price. Thus for any future atempts to study this further, it might be worth changing the label to price per night per guest, and gathering the size of the property (eg in square feet) as another feature. 
