@@ -124,15 +124,14 @@ def evaluate_model(model, x_test, y_test, label_list):
     
     return accuracy_score, recall_scores, precision_scores, f_1_score
 ```
-Overall the best model found, with an accuracy of 78% on the test set, was a random forest with hyperparameters:
-  * 100 estimators
-  * max_depth = 10
-  * criterion = gini
-  * max_features = Null
+Overall the best model found, with an accuracy and f_1 score of 45% and 0.41 respectively (on test set), was a random forest with hyperparameters:
+  * 200 estimators
+  * max_depth = null
+  * criterion = log_loss
+  * max_features = log2
 
-The confusion matrix for this model is shown below;
-
-![rf_confusion_matrix](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/2b9f3c15-776d-4cee-819a-28a61eeb4538)
+The confusion matrix for this model on the test set is shown here: 
+![Figure_1](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/2cd6af91-a8dd-4493-a40f-51bcce47e00e)
 
 
 The hyperparameter dictionaries used for the grid search are listed here below. Each value in the (key, value) pair is a list of the different hyperparameters to try:
@@ -283,7 +282,7 @@ The best performing model was selected based on the test set, and had the follow
   * training epochs: 50
   * number of layers : 11 (2 linear, 9 batchnorm)
 
-The following schematic provides a helpful overview of this model; 
+The following schematic provides an overview of the model architecture; 
 ![nn](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/086ca6ee-5be4-465e-ae1f-a8f9ecdd6a13)
 
 (tool source: https://alexlenail.me/NN-SVG/index.html)
@@ -300,6 +299,6 @@ from Milestone 1. We can observe that the smoothed loss on the training and vali
 ![validation_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/1e7302d5-13ab-451e-86bf-ea2318078f9a)
 
 ## Conclusions
-The overall conclusion that we can make from all these models, and their relatively low predicitive power, is that the features used in these 
+The overall conclusion that we can make from the regression models, and their relatively low predicitive power, is that the features used in these 
 models are poorly correlated with price. A suggested explanation is that when most customers rate their stay, they do so without much thought and (so long as
 they were at least relatively satisfied) assign ratings of 3 or 4 stars by default. Furthermore, features such as bed and guest numbers might not be by themselves of much predictive use since the "density" and"quality" of these variables aren't captured. For example, a large mansion that fits two is likely to be more expensive than a cramped bunkhouse that fits 5, but our model might see the higher number of guests and predict a higher price. Thus for any future atempts to study this further, it might be worth changing the label to price per night per guest, and gathering the size of the property (eg in square feet) as another feature. 
