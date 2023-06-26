@@ -1,5 +1,11 @@
 # airbnb_property_model
-Training and evaluating multiple machine learning models on data from airbnbnb property listings in order to predict property features - price, category etc. Scripts written in Python, making use of various data science libraries for pre-processing and ML; pandas, scikit-learn, matplotlib and PyTorch.
+Training and evaluating different machine learning models for classification and regression on a dataset of details from 1000 property listings on the popular property rental website Airbnb. Linear regression and deep learning models predict the nightly price of a given property, while logistic regression and random forest models predict a classification for the type of property.
+Scripts written in Python, making use of various data science libraries for pre-processing and ML;
+  * Pandas
+  * Numpy
+  * Scikit-learn
+  * Matplotlib
+  * PyTorch
 
 ## Milestone 1: Data Cleaning
 The first stage was cleaning and pre-processing the raw data to get it into the right format for ML. The raw property data in csv format was first loaded into a pandas dataframe. Then a script was written inside tabular_data.py to:
@@ -12,12 +18,14 @@ The first stage was cleaning and pre-processing the raw data to get it into the 
 Since the goal of this project is to train supervised learning models, we needed to be able to format the data into a features, labels tuple:
 ```
 def load_airbnb(data, label: str):
-    tab_df = pd.read_csv(data)
-    labels = tab_df[label]
-    tab_df = tab_df.drop(label, axis = 1)
-    text_cols = tab_df.select_dtypes(include = object)
-    tab_df = tab_df.drop(text_cols,axis=1).drop('Unnamed: 0',axis=1).drop('Unnamed: 19',axis=1)
-    features = tab_df
+    # load in the data
+    features = pd.read_csv(data)
+    # drop label column from features dataframe
+    labels = features[label]
+    features = features.drop(label, axis = 1)
+    # remove text columns, since our models will only use numeric data
+    text_cols = features.select_dtypes(include = object)
+    features = features.drop(text_cols,axis=1).drop('Unnamed: 0',axis=1).drop('Unnamed: 19',axis=1)
     
     return features, labels
 ```
@@ -31,15 +39,18 @@ def makeGrid(my_dict):
     keys=my_dict.keys()
     combinations=itertools.product(*my_dict.values())
     ds=[dict(zip(keys,cc)) for cc in combinations]
-    
-    return ds #returns a list of all possible hyperparameter combinations
+
+    # return a list of dictionaries all possible hyperparameter combinations
+    return ds 
 
 def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train,y_test, x_validation,y_validation, hyperparameter_dict): 
     param_combinations = makeGrid(hyperparameter_dict)
     best_params = None
     best_rmse = np.inf
-    for i in param_combinations: #loops through the combinations, returns the best performing model
+    # loop through the possible combinations, return the best performing model
+    for i in param_combinations: 
         model=  model_class(**i)
+        # fit model to training set
         model.fit(x_train,y_train)
         y_pred = model.predict(x_validation)
         rmse_validation = metrics.mean_squared_error(y_pred,y_validation,squared = False)
@@ -47,20 +58,21 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
         y_pred_train = model.predict(x_train)
         rmse_train = metrics.mean_squared_error(y_pred_train,y_train,squared=False)
         r_2_train = metrics.r2_score(y_pred_train,y_train)
-        
-        if rmse_validation < best_rmse: #root mean squared error on validation set used as main metric of performance
+        # root mean squared error on validation set used as main metric of performance
+        if rmse_validation < best_rmse: 
             best_rmse = rmse_validation 
             best_params = i
             r_2_score = r_2_validation 
         else:
             pass
     hyperparameter_optimals = {"parameters": best_params,"rmse": best_rmse,"r_2": r_2_score,"rmse_train":rmse_train,"r_2_train":r_2_train,}
-    
-    return hyperparameter_optimals #returns dictionary of best hyperparameters and associated metrics
+
+    # return dictionary of best hyperparameters and associated metrics
+    return hyperparameter_optimals 
 ```
 Once this was working well, I also made an alternative method to implement the same grid search using the in built GridSearchCV class of Sklearn;
 ```
-    def tune_regression_model_hyperparameters(features,labels, hyperparameter_dict):
+    def tune_regression_model_hyperparameters(features, labels, hyperparameter_dict):
         model = linear_model.SGDRegressor(max_iter=1000)
         grid_search = GridSearchCV(model,hyperparameter_dict,scoring = "neg_root_mean_squared_error")
         grid_search.fit(features,labels)
@@ -73,14 +85,16 @@ Once this was working well, I also made an alternative method to implement the s
 ```
 The model and associated data were saved using the joblib module;
 ```
-    def save_model(folder,model,best_params,best_loss):
+    def save_model(folder, model, best_params, best_loss):
+        working_dir = os.getcwd()
+        # switch directory to the folder where we want to save model data
         os.chdir(folder)
         joblib.dump(model,"model.joblib")
         with open("hyperparameters.json", "w") as outfile:
             json.dump(best_params, outfile)
         with open("metrics.json", "w") as outfile:
             json.dump(best_loss, outfile)
-        os.chdir(f"C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model")
+        os.chdir(working_dir)
 ```
 ## Milestone 3: Classification 
 Here we write a separate script (classification_modelling.py) for predicting the category each listing comes under eg. "chalets", "beachfront", "treehouse" etc, using the numerical data again as features. The strategy is to try three different model types from scikit-learn and compare their performance:
@@ -89,20 +103,38 @@ Here we write a separate script (classification_modelling.py) for predicting the
   * random forest (ensemble.RandomForestClassifier)
   * gradient boosting with decision trees as weak learners (ensemble.GradientBoostingClassifier)
 
-As with regession modelling, a grid search is used on each model class to find the best hyperparameters and their performance metrics on the validation set. These are accuracy, precision, recall and f_1 score;
+As with regession modelling, a grid search is used on each model class to find the best hyperparameters and their performance metrics on the test set. These are accuracy, precision, recall and f_1 score;
 ```
-def evaluate_model(model, x_validation, y_validation, label_list):
-    y_pred = model.predict(x_validation)
-    accuracy_score = metrics.accuracy_score(y_validation, y_pred) #percent of correct predictions over all label classes
-    confusion_matrix = metrics.confusion_matrix(y_pred, y_validation, labels=label_list) #optional visualisation 
-    recall_scores = metrics.recall_score(y_validation, y_pred, average=None, labels= label_list) #list of recall scores for each label class
+def evaluate_model(model, x_test, y_test, label_list):
+    y_pred = model.predict(x_test)
+    # percent of correct predictions over all label classes
+    accuracy_score = metrics.accuracy_score(y_test, y_pred)
+    # generate confusion matrix as a useful visualisation
+    confusion_matrix = metrics.confusion_matrix(y_pred, y_test, labels = label_list)
+    disp = metrics.ConfusionMatrixDisplay(confusion_matrix, display_labels=label_list)
+    disp.plot()
+    plt.show()
+    # list of recall scores for each label class
+    recall_scores = metrics.recall_score(y_test, y_pred, average=None, labels= label_list) 
+    # zip into dictionary format for ease of comprehension
     recall_scores = dict(zip(label_list, recall_scores)) #zip into dictionary format for ease of comprehension
-    precision_scores = metrics.precision_score(y_validation, y_pred, average = None, labels=label_list)
+    precision_scores = metrics.precision_score(y_test, y_pred, average = None, labels=label_list)
     precision_scores= dict(zip(label_list, precision_scores))
-    f_1_score = metrics.f1_score(y_validation, y_pred, average="macro")
+    f_1_score = metrics.f1_score(y_test, y_pred, average="macro")
     
     return accuracy_score, recall_scores, precision_scores, f_1_score
 ```
+Overall the best model found, with an accuracy of 78% on the test set, was a random forest with hyperparameters:
+  * 100 estimators
+  * max_depth = 10
+  * criterion = gini
+  * max_features = Null
+
+The confusion matrix for this model is shown below;
+
+![rf_confusion_matrix](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/2b9f3c15-776d-4cee-819a-28a61eeb4538)
+
+
 The hyperparameter dictionaries used for the grid search are listed here below. Each value in the (key, value) pair is a list of the different hyperparameters to try:
 ```
 hyperparam_dict_logistic = {"penalty":["l1", "l2", "elasticnet", None], "dual": [True, False], "C" : [0.5,1,1.5,2], "solver":["liblinear", "newton-cg", "newton-cholesky", "sag", "saga"], "max_iter": [500]}
