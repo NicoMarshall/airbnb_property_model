@@ -37,7 +37,7 @@ def load_airbnb(data, label: str):
     
     return tab_df, labels
    
-def plot_histograms(data: pd.DataFrame):
+def plot_histograms(f: pd.DataFrame):
     fig, ax = plt.subplots(nrows=3, ncols=2)
     fig, axes = plt.subplots(nrows=3, ncols=4, figsize=(10, 6))  # define the figure and subplots
     axes = axes.ravel()  # array to 1D
@@ -46,7 +46,7 @@ def plot_histograms(data: pd.DataFrame):
 
     for col, color, ax in zip(cols, colors, axes):
         f[col].plot(kind='hist', ax=ax, color=color, label=col, title=col)
-        #ax.legend()    
+        
     fig.delaxes(axes[11])  # delete the empty subplot
     fig.tight_layout()
     plt.show()
