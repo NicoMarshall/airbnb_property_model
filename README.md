@@ -1,6 +1,6 @@
-# airbnb_property_model
-Training and evaluating different machine learning models for classification and regression on a dataset of details from 1000 property listings on the popular property rental website Airbnb. Linear regression and deep learning models predict the nightly price of a given property, while logistic regression and random forest models predict a classification for the type of property.
-Scripts written in Python, making use of various data science libraries for pre-processing and ML;
+# airbnb_property_models
+A project to train and evaluate different machine learning models for classification and regression on a dataset of details from 1000 property listings on the popular property rental website Airbnb. Linear regression and deep learning models predict the nightly price of a given property, while logistic regression, random forest and gradient boosting models predict a classification for the type of property. A hyperparameter grid search was used with each to find the best performer.
+Scripts written in Python, making use of various data science libraries for pre-processing and machine learning;
   * Pandas
   * Numpy
   * Scikit-learn
@@ -8,14 +8,15 @@ Scripts written in Python, making use of various data science libraries for pre-
   * PyTorch
 
 ## Milestone 1: Data Cleaning
-The first stage was cleaning and pre-processing the raw data to get it into the right format for ML. The raw property data in csv format was first loaded into a pandas dataframe. Then a script was written inside tabular_data.py to:
+The first stage is cleaning and pre-processing the raw data to get it into the right format for ML. The raw property data in csv format was first loaded into a pandas dataframe. Then a script was written inside tabular_data.py to:
   * remove rows where ratings were missing 
   * format description strings 
   * set default values and split data into features, labels tuples 
   * save the cleaned data as a new csv file
 
 
-Since the goal of this project is to train supervised learning models, we needed to be able to format the data into a features, labels tuple:
+Since the goal is to train supervised learning models, we need to be able to format the data into a (features, labels) tuple. The following method 
+loads the (cleaned) data from a csv file and does the reformatting:
 ```
 def load_airbnb(data, label: str):
     # load in the data
@@ -30,7 +31,19 @@ def load_airbnb(data, label: str):
     return features, labels
 ```
 Additionally, a seperate script was written (prepare_image_data.py) to resize image data so that all images have the same height. Used the cv2 module for image augmentation.
- 
+
+We can now do some exploratory analysis on the cleaned data, to get a feel for how it looks. Our proposed target variable, price per night, is distributed as per the histogram below;
+
+![price_night_hist](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/500cf223-4669-4a25-b257-e3ca2e9a6aec)
+
+With a mean of £154, and a standard deviation of £129, we can see that the price exhibits slight right skewness.
+
+The features data, meanwhile, is as follows:
+
+![features_hists](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/51cc2fed-324f-4d93-be01-0ca0e66dd74e)
+
+We can see that many of the variables are extremely concentrated in a small range, suggesting that these features may be of little predictive power.
+
 ## Milestone 2: Linear Regression 
 The goal here was to train the best linear model to predict the nightly price of a property given its numerical features; beds, bedrooms, bathrooms, guests, cleanliness_rating, accuracy_rating, communication_rating, location_rating, check-in_rating, value_rating. Each model was an instance of the sklearn linear_model.SGDRegressor class, with a grid search implemented from scratch to find the best model hyperparameters;
 
@@ -65,12 +78,12 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
             r_2_score = r_2_validation 
         else:
             pass
-    hyperparameter_optimals = {"parameters": best_params,"rmse": best_rmse,"r_2": r_2_score,"rmse_train":rmse_train,"r_2_train":r_2_train,}
+    hyperparameter_optimals = {"parameters": best_params,"rmse": best_rmse,"r_2": r_2_score}
 
     # return dictionary of best hyperparameters and associated metrics
     return hyperparameter_optimals 
 ```
-Once this was working well, I also made an alternative method to implement the same grid search using the in built GridSearchCV class of Sklearn;
+Once this was working well, an alternative method was also used to implement the same grid search using the in built GridSearchCV class of Sklearn;
 ```
     def tune_regression_model_hyperparameters(features, labels, hyperparameter_dict):
         model = linear_model.SGDRegressor(max_iter=1000)
@@ -80,7 +93,7 @@ Once this was working well, I also made an alternative method to implement the s
         best_params["estimator"] = str(best_params["estimator"])
         best_loss = np.abs(grid_search.best_score_)
         
-        return grid_search,best_params,best_loss
+        return grid_search, best_params, best_loss
     
 ```
 The model and associated data were saved using the joblib module;
@@ -96,6 +109,8 @@ The model and associated data were saved using the joblib module;
             json.dump(best_loss, outfile)
         os.chdir(working_dir)
 ```
+The best model found had an rmse value of £105 - a poor level of accuracy.
+
 ## Milestone 3: Classification 
 Here we write a separate script (classification_modelling.py) for predicting the category each listing comes under eg. "chalets", "beachfront", "treehouse" etc, using the numerical data again as features. The strategy is to try three different model types from scikit-learn and compare their performance:
 
@@ -130,8 +145,8 @@ Overall the best model found, with an accuracy and f_1 score of 45% and 0.41 res
   * criterion = log_loss
   * max_features = log2
 
-Though it should be noted that the best peforming logistic regression and gradient boosted models performed only slightly worse. It appears that 50% accuracy
-on unseen data is an upper ceiling that can't be breached by any standard classification model, at least using these 11 variables as our features. 
+It should be noted that the best peforming logistic regression and gradient boosted models performed only slightly worse. It appears that 50% accuracy
+on unseen data is an upper ceiling that can't be breached by the techniques tried here, at least with these 11 variables as our features. 
 
 The confusion matrix for this model on the test set is shown here: 
 ![Figure_1](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/2cd6af91-a8dd-4493-a40f-51bcce47e00e)
@@ -304,4 +319,4 @@ from Milestone 1. We can observe that the smoothed loss on the training and vali
 ## Conclusions
 The overall conclusion looking across all the best models, and their relatively low predicitive power, is that the features used in these 
 models are poorly correlated with price. A suggested explanation is that when most customers rate their stay, they do so without much thought and (so long as
-they were at least relatively satisfied) assign ratings of 3 or 4 stars by default. Furthermore, features such as bed and guest numbers might not be by themselves of much predictive use since the "density" and"quality" of these variables aren't captured. For example, a large mansion that fits two is likely to be more expensive than a cramped bunkhouse that fits 5, but our model might see the higher number of guests and predict a higher price. Thus for any future atempts to study this further, it might be worth changing the label to price per night per guest, and gathering the size of the property (eg in square feet) as another feature. 
+they were at least relatively satisfied) assign ratings of 5 stars by default. This can be seen in the very low variance of the features histograms in Milestone 1. Furthermore, features such as bed and guest numbers might not be by themselves of much predictive use since the "density" and"quality" of these variables aren't captured. For example, a large mansion that fits two is likely to be more expensive than a cramped bunkhouse that fits 5, but our model might see the higher number of guests and predict a higher price. Thus for any future atempts to study this further, it might be worth changing the label to price per night per guest, and gathering the size of the property (eg in square feet) as another feature. 
