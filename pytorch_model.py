@@ -105,8 +105,8 @@ def get_nn_config(config_file: yaml):
     return config
 
 def generate_nn_config(n_hidden:int):
-    config_layers = makeGrid({"type":["relu","batchnorm"],"units":[1,10,20],"activation":["relu","Softmax"]})
-    config_lr_epochs = makeGrid({"learning_rate":[0.1, 0.01, 0.001],"epochs":[100]})
+    config_layers = makeGrid({"type":["dense","batchnorm"],"units":[1,10,20],"activation":["relu","Softmax"]})
+    config_lr_epochs = makeGrid({"learning_rate":[0.01,0.05,0.1],"epochs":[50,100]})
     layers= random.choices(config_layers, k=n_hidden)
     layers.append({"type":"dense","units":1,"activation":"relu"})
     hyperparams = random.choice(config_lr_epochs)
@@ -133,30 +133,34 @@ def config_train(model_class, config, train_dataloader, val_dataloader):
     optimiser = optimiser(model.parameters(), lr = learning_rate)
     epochs = config["epochs"]
     loss_function = getattr(F, config["loss"])
+    writer = SummaryWriter()
     for i in range(epochs):
         for features, labels in train_dataloader:
+            model.train()
             pred = model(features).view([len(labels)])
             train_loss = torch.sqrt(loss_function(pred, labels))
             optimiser.zero_grad()
             train_loss.backward()
             optimiser.step()
-            #writer.add_scalar("Training Loss", loss, i)
-        """
-        if i%5 == 0:    
+            writer.add_scalar("Training Loss", train_loss, i)
+        
+        if i%3 == 0:   
+            model.eval() 
             with torch.no_grad():
+                
                 val_loss = 0
                 for features, labels in val_dataloader:
                         pred = model(features).view([len(labels)])
                         val_loss = torch.sqrt(loss_function(pred, labels))
-                print(f"Loss in epoch#{i} was {val_loss}")
-                #writer.add_scalar("Validation Loss", val_loss, i)
+                writer.add_scalar("Validation Loss", val_loss, i)
         else:
             pass
-        """ 
+        
     train_time = time.perf_counter() - start_time         
     return model, train_time
     
 def eval_model(model,train_dataloader,validation_dataloader,test_dataloader,train_size):
+    model.eval()
     with torch.no_grad():
         loss = MeanSquaredError()
         r2_score = R2Score()
@@ -225,4 +229,4 @@ if __name__ == "__main__":
     dest_folder="C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model\\models\\neural_networks\\regression"
     save_model(dest_folder,model,config,metrics)
     """
-    find_best_nn(num_combinations=5, n_hidden = 20)
+    find_best_nn(num_combinations=10, n_hidden = 10)
