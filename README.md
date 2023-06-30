@@ -311,10 +311,25 @@ Metrics:
   * test loss / R2 score: 97.55 / 0.43
 
 As we see, the grid search has yielded a better model - but still only one that is very similar in performance to the best linear regression model
-from Milestone 1. We can observe that the smoothed loss on the training and validation sets plateaus at around £100; still a poor performance: 
+from Milestone 2. We can observe that the smoothed loss on the training and validation sets plateaus at around £100; still a poor performance: 
 
 ![training_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/763c3606-9e21-440f-894d-53d105c49148)
 ![validation_loss](https://github.com/NicoMarshall/airbnb_property_model/assets/109066030/1e7302d5-13ab-451e-86bf-ea2318078f9a)
+
+## Minor Experiment; Predicting bedroom number
+We can switch the target variable to bedroom number and re-run the training pipeline, then compare performance with price modelling.
+Since the number of bedrooms is an integer with inherent ordering and a finite state space (1 to 10), we can try both regression and classification 
+approaches. Once again, we use a hyperparameter grid search and select the best model based on the relevant test set metric. Since this is a heavily imbalanced 
+dataset (see Milestone 1), the F_1 score is the preferred metric for classification models.
+
+Results:
+
+  * Neural Network: RMSE loss = 0.57
+  * Linear Regression: RMSE loss = 0.74
+  * Logistic Regression: Accuracy score = 0.816 , F_1 score = 0.657
+  * Random Forest: Accuracy score: 0.776 , F_1 score = 0.615
+
+It is interesting to note that the best neural network is clearly superior to the best linear regressor, in contrast to the price modelling before.
 
 ## Conclusions
 The overall conclusion looking across all the best models, and their relatively low predicitive power, is that the features used in these 
