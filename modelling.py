@@ -19,7 +19,7 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
     best_params = None
     best_rmse = 1000000000
     for i in param_combinations:
-        model=  model_class(loss =i["loss"],penalty=i["penalty"],alpha=i["alpha"],learning_rate=i["learning_rate"])
+        model = model_class(**i)
         model.fit(x_train,y_train)
         y_pred = model.predict(x_validation)
         rmse_validation = metrics.mean_squared_error(y_pred,y_validation,squared = False)
@@ -34,7 +34,7 @@ def custom_tune_regression_hyperparameters(model_class, x_train, x_test, y_train
             r_2_score = r_2_validation
         else:
             pass
-    hyperparameter_optimals = {"parameters": best_params,"rmse": best_rmse,"r_2": r_2_score,"rmse_train":rmse_train,"r_2_train":r_2_train,}
+    hyperparameter_optimals = {"parameters": best_params,"rmse": best_rmse,"r_2": r_2_score}
     
     return hyperparameter_optimals
    
@@ -65,12 +65,7 @@ if __name__ == "__main__":
     hyperparameter_dict = {"loss":["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"],"penalty":["l2", "l1", "elasticnet",None],"alpha":[0.0001,0.0005,0.001,0.1,0.001],"shuffle":[True,False],"learning_rate":["constant","optimal","invscaling"]}
     #optimals = custom_tune_regression_hyperparameters(linear_model.SGDRegressor,x_train ,x_test ,y_train ,y_test,x_validation,y_validation,hyperparameter_dict)
     skl_opt = tune_regression_model_hyperparameters(features,labels,hyperparameter_dict)
-    print(skl_opt)
     file_dest = f"C:\\Users\\nicom\\OneDrive\\Υπολογιστής\\airbnb_property_model\\models\\regression\\lin_regression"
-    save_model(file_dest,skl_opt[0],skl_opt[1],skl_opt[2])
-    
-    #print(optimals)
-    
     
    
 

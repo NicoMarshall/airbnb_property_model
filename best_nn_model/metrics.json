@@ -1,0 +1,1 @@
+{"train_loss": 101.5912857055664, "test_loss": 97.55155181884766, "validation_loss": 91.84479522705078, "train_r2_score": 0.40496915578842163, "test_r2_score": 0.4336680769920349, "validation_r2_score": 0.18810516595840454, "inference_latency": 1.4643891387742692e-05, "train time": 3.019344899992575}

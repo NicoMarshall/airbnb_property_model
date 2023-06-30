@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-
+import matplotlib
+import matplotlib.pyplot as plt
 
 def remove_rows_with_missing_ratings(df: pd.DataFrame):
     df.dropna(subset=["Location_rating","Cleanliness_rating","Accuracy_rating","Value_rating","Check-in_rating","Communication_rating","bedrooms"], inplace=True)
@@ -33,16 +34,28 @@ def load_airbnb(data, label: str):
     tab_df = tab_df.drop(label, axis = 1)
     text_cols = tab_df.select_dtypes(include = object)
     tab_df = tab_df.drop(text_cols,axis=1).drop('Unnamed: 0',axis=1).drop('Unnamed: 19',axis=1)
-    #print("bedrooms:",tab_df["bedrooms"].value_counts())
-    #print("Location_rating:", tab_df["Location_rating"].value_counts())
-    #tab_df['Unnamed: 0']
-    features = tab_df
-    return features, labels
     
+    return tab_df, labels
+   
+def plot_histograms(f: pd.DataFrame):
+    fig, ax = plt.subplots(nrows=3, ncols=2)
+    fig, axes = plt.subplots(nrows=3, ncols=4, figsize=(10, 6))  # define the figure and subplots
+    axes = axes.ravel()  # array to 1D
+    cols = f.columns
+    colors = ['tab:blue', 'tab:orange', 'tab:green']*4  # list of colors for each subplot, otherwise all subplots will be one color
+
+    for col, color, ax in zip(cols, colors, axes):
+        f[col].plot(kind='hist', ax=ax, color=color, label=col, title=col)
+        
+    fig.delaxes(axes[11])  # delete the empty subplot
+    fig.tight_layout()
+    plt.show()
         
     
 
 if __name__ == "__main__":
     clean_tabular_data("listing.csv").to_csv("clean_tabular_data.csv")
-    load_airbnb("clean_tabular_data.csv", "Price_Night")
+    features, labels = load_airbnb("clean_tabular_data.csv", "Price_Night")
+    plot_histograms(features)
+   
     
