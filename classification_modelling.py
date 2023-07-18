@@ -15,16 +15,18 @@ from sklearn.exceptions import ConvergenceWarning
 def evaluate_model(model, x, y, label_list):
     y_pred = model.predict(x)
     accuracy_score = metrics.accuracy_score(y,y_pred)
-    #confusion_matrix = metrics.confusion_matrix(y_pred, y, labels=label_list)
+    confusion_matrix = metrics.confusion_matrix(y_pred, y, labels=label_list)
     recall_scores = metrics.recall_score(y,y_pred, average=None, labels= label_list)
     recall_scores = dict(zip(label_list,recall_scores))
     precision_scores = metrics.precision_score(y, y_pred, average = None, labels=label_list)
     precision_scores= dict(zip(label_list, precision_scores))
     f_1_score = metrics.f1_score(y, y_pred, average="macro")
-    #scores =  dict(zip(["accuracy_score", "recall_scores", "precision_scores", "f_1_score"], accuracy_score, recall_scores, precision_scores, f_1_score))
     return accuracy_score, recall_scores, precision_scores, f_1_score
 
-
+def split_data():
+    x_train ,x_test ,y_train ,y_test = model_selection.train_test_split(features,labels, test_size=0.3)
+    x_validation, x_test, y_validation,y_test = model_selection.train_test_split(x_test,y_test,test_size = 0.5)
+    return x_train, y_train, x_validation, y_validation, x_test, y_test
     
 def makeGrid(my_dict):  
     keys=my_dict.keys()
@@ -48,8 +50,7 @@ def tune_hyperparameters(model_class, features, labels, hyperparam_dict):
     best_model = None
     best_model_validation_metrics = None
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
-    x_train ,x_test ,y_train ,y_test = model_selection.train_test_split(features,labels, test_size=0.3)
-    x_validation, x_test, y_validation,y_test = model_selection.train_test_split(x_test,y_test,test_size = 0.5)
+    x_train, y_train, x_validation, y_validation, x_test, y_test = split_data()
     for i in hyperparam_combs:
         try:
             model = model_class(**i)
@@ -86,7 +87,7 @@ def find_best_model(task_folder:str):
         metrics = f"{task_folder}\\{file}\\metrics.json"
         with open(metrics) as json_file:
             data = json.load(json_file)
-            test_data = data[0] 
+            test_data = data["Test Set"] 
             accuracy = test_data["Accuracy"]
         if accuracy > best_test_accuracy:
                 best_test_accuracy = accuracy
@@ -112,7 +113,7 @@ if __name__ =="__main__":
     file_dest = f"{root}\\models\\classification\\gradient_boosting"
     save_model(file_dest, model, best_hyperparams, best_model_metrics )
     task_folder = f"{root}\\models\\classification"
-    #find_best_model(task_folder)
+    find_best_model(task_folder)
     
     
   
