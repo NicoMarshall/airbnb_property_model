@@ -1,1 +1,1 @@
-{"penalty": null, "dual": false, "C": 0.5, "solver": "newton-cg", "max_iter": 500}
+{"penalty": "l1", "dual": false, "C": 2, "solver": "liblinear", "max_iter": 500}
